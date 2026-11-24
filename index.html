@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物質變化小偵探 - 不會生成新物質的秘密</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts 圓體字型，讓小學生閱讀更親切 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FFFBEB;
+            background-image: radial-gradient(#FDE68A 2px, transparent 2px);
+            background-size: 32px 32px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 卡通立體按鈕效果 */
+        .btn-cartoon {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
+        }
+        .btn-cartoon:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.15);
+        }
+        .btn-cartoon:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+        }
+
+        /* 彈跳動畫 */
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .animate-bounce-in {
+            animation: bounceIn 0.4s ease-out forwards;
+        }
+
+        /* 搖晃動畫（答錯時） */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* 漂浮動畫 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* 隱藏捲軸但保留功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800">
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-white/90 backdrop-blur-md border-b-4 border-amber-300 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="switchView('home')">
+                <span class="text-3xl">🔬</span>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-black text-amber-600 tracking-wide">物質變化小偵探</h1>
+                    <p class="text-xs text-slate-500 font-medium hidden sm:block">不會生成新物質的可見變化</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="switchView('learn')" id="nav-learn" class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-sm bg-sky-100 text-sky-700 hover:bg-sky-200 transition flex items-center gap-1">
+                    <span>📖</span> <span>知識小百科</span>
+                </button>
+                <button onclick="startGame()" id="nav-game" class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-sm bg-amber-400 text-amber-950 hover:bg-amber-500 transition flex items-center gap-1 shadow-sm">
+                    <span>🎮</span> <span>闖關挑戰</span>
+                </button>
+                <button onclick="toggleMute()" id="btn-mute" class="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition" title="開關音效">
+                    🔊
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主內容區 -->
+    <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-6 flex flex-col justify-center">
+
+        <!-- 1. 首頁視圖 -->
+        <section id="view-home" class="text-center space-y-6 animate-bounce-in">
+            <div class="bg-white rounded-3xl p-6 sm:p-10 border-4 border-amber-300 shadow-xl relative overflow-hidden">
+                <!-- 裝飾背景圓圈 -->
+                <div class="absolute -top-10 -left-10 w-32 h-32 bg-sky-100 rounded-full opacity-60"></div>
+                <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-rose-100 rounded-full opacity-60"></div>
+
+                <div class="relative z-10">
+                    <div class="inline-block bg-amber-100 text-amber-800 font-bold px-4 py-1.5 rounded-full text-sm mb-4 border-2 border-amber-300">
+                        ✨ 小學自然科學互動樂園 ✨
+                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-black text-slate-800 mb-4 leading-tight">
+                        不會生成新物質的<br>
+                        <span class="text-amber-500">四大可見變化！</span>
+                    </h2>
+                    <p class="text-slate-600 text-base sm:text-lg max-w-xl mx-auto mb-8 leading-relaxed">
+                        有些東西看起來形狀或狀態改變了，但其實<strong>本質還是原來的物質</strong>喔！快來認識<strong>溶解、蒸發、擠壓、延展</strong>，並挑戰成為最厲害的科學小偵探吧！
+                    </p>
+
+                    <!-- 四大概念預覽小圖示 -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-2xl mx-auto mb-8">
+                        <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3 flex flex-col items-center animate-float" style="animation-delay: 0s;">
+                            <span class="text-4xl mb-1">☕</span>
+                            <span class="font-black text-sky-700 text-lg">溶解</span>
+                        </div>
+                        <div class="bg-orange-50 border-2 border-orange-200 rounded-2xl p-3 flex flex-col items-center animate-float" style="animation-delay: 0.4s;">
+                            <span class="text-4xl mb-1">👕</span>
+                            <span class="font-black text-orange-700 text-lg">蒸發</span>
+                        </div>
+                        <div class="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-3 flex flex-col items-center animate-float" style="animation-delay: 0.8s;">
+                            <span class="text-4xl mb-1">🧴</span>
+                            <span class="font-black text-emerald-700 text-lg">擠壓</span>
+                        </div>
+                        <div class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-3 flex flex-col items-center animate-float" style="animation-delay: 1.2s;">
+                            <span class="text-4xl mb-1">💍</span>
+                            <span class="font-black text-purple-700 text-lg">延展</span>
+                        </div>
+                    </div>
+
+                    <!-- 行動按鈕 -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <button onclick="switchView('learn')" class="btn-cartoon w-full sm:w-auto px-8 py-4 rounded-2xl bg-sky-500 text-white font-black text-xl flex items-center justify-center gap-2 border-2 border-sky-600">
+                            <span>📖</span>
+                            <span>先看知識小百科</span>
+                        </button>
+                        <button onclick="startGame()" class="btn-cartoon w-full sm:w-auto px-8 py-4 rounded-2xl bg-amber-400 text-amber-950 font-black text-xl flex items-center justify-center gap-2 border-2 border-amber-500">
+                            <span>🚀</span>
+                            <span>直接開始闖關！</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 知識小百科（學習卡片視圖） -->
+        <section id="view-learn" class="hidden space-y-6 animate-bounce-in">
+            <!-- 觀念小提醒橫幅 -->
+            <div class="bg-indigo-600 text-white rounded-3xl p-6 shadow-lg border-4 border-indigo-400">
+                <div class="flex flex-col sm:flex-row items-center gap-4">
+                    <div class="text-5xl bg-white/20 p-3 rounded-2xl">💡</div>
+                    <div>
+                        <h3 class="text-xl sm:text-2xl font-black mb-1">什麼是「不會生成新物質的變化」？</h3>
+                        <p class="text-indigo-100 text-sm sm:text-base leading-relaxed">
+                            這在科學上叫做<strong>「物理變化」</strong>。雖然物質的外表、形狀、大小或狀態（固體、液體、氣體）改變了，但它<strong>並沒有變成另一種新的東西</strong>！例如：水變成水蒸氣，它依然還是「水」喔！
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 四張學習卡片網格 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="encyclopedia-cards">
+                <!-- 卡片內容由 JS 動態生成，確保結構整潔 -->
+            </div>
+
+            <div class="text-center pt-4">
+                <button onclick="startGame()" class="btn-cartoon px-10 py-4 rounded-2xl bg-amber-400 text-amber-950 font-black text-xl border-2 border-amber-500 inline-flex items-center gap-2">
+                    <span>🎯</span>
+                    <span>我學會了！開始闖關測驗</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 3. 闖關大挑戰（測驗視圖） -->
+        <section id="view-game" class="hidden space-y-4">
+            <!-- 頂部狀態列：進度、分數、連擊 -->
+            <div class="bg-white rounded-2xl p-4 border-4 border-amber-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3 flex-1 min-w-[200px]">
+                    <span class="font-black text-slate-700 whitespace-nowrap" id="question-counter">第 1 / 10 題</span>
+                    <div class="w-full bg-slate-100 h-4 rounded-full overflow-hidden border border-slate-200">
+                        <div id="progress-bar" class="bg-amber-400 h-full transition-all duration-300 rounded-full" style="width: 10%;"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div id="combo-badge" class="hidden px-3 py-1 rounded-full bg-rose-100 text-rose-600 font-black text-sm border border-rose-300 animate-bounce">
+                        🔥 <span id="combo-count">2</span> 連擊！
+                    </div>
+                    <div class="px-4 py-1.5 rounded-xl bg-amber-100 text-amber-900 font-black text-base border-2 border-amber-300">
+                        ⭐ 得分：<span id="score-display">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 題目卡片 -->
+            <div id="question-card" class="bg-white rounded-3xl p-6 sm:p-8 border-4 border-sky-300 shadow-lg text-center relative">
+                <!-- 原題標記（如果是工作紙原題） -->
+                <div id="worksheet-badge" class="hidden absolute top-4 right-4 bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full border border-amber-300">
+                    📝 課本/工作紙經典題
+                </div>
+
+                <p class="text-sm font-bold text-sky-600 mb-3">請觀察下面的生活現象，這屬於哪一種變化呢？</p>
+
+                <!-- 情境插畫與 Emoji 組合區 -->
+                <div class="my-4 flex flex-col items-center justify-center">
+                    <div id="question-visual" class="w-32 h-32 sm:w-36 sm:h-36 rounded-3xl bg-gradient-to-b from-sky-50 to-amber-50 border-4 border-dashed border-amber-300 flex items-center justify-center text-6xl sm:text-7xl shadow-inner mb-4">
+                        ☕
+                    </div>
+                    <h3 id="question-text" class="text-2xl sm:text-3xl font-black text-slate-800 tracking-wide">
+                        在咖啡裏加入糖
+                    </h3>
+                    <p id="question-hint" class="text-slate-500 text-sm sm:text-base mt-2 max-w-md">
+                        （攪拌之後，白色的糖粒不見了，咖啡變甜了！）
+                    </p>
+                </div>
+
+                <!-- 四個作答大按鈕 -->
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto mt-6" id="options-container">
+                    <button onclick="handleAnswer('溶解')" data-type="溶解" class="option-btn btn-cartoon py-4 px-4 rounded-2xl bg-sky-100 hover:bg-sky-200 border-4 border-sky-400 text-sky-900 font-black text-xl sm:text-2xl flex items-center justify-center gap-2">
+                        <span>💧</span><span>溶解</span>
+                    </button>
+                    <button onclick="handleAnswer('蒸發')" data-type="蒸發" class="option-btn btn-cartoon py-4 px-4 rounded-2xl bg-orange-100 hover:bg-orange-200 border-4 border-orange-400 text-orange-900 font-black text-xl sm:text-2xl flex items-center justify-center gap-2">
+                        <span>☀️</span><span>蒸發</span>
+                    </button>
+                    <button onclick="handleAnswer('擠壓')" data-type="擠壓" class="option-btn btn-cartoon py-4 px-4 rounded-2xl bg-emerald-100 hover:bg-emerald-200 border-4 border-emerald-400 text-emerald-900 font-black text-xl sm:text-2xl flex items-center justify-center gap-2">
+                        <span>✊</span><span>擠壓</span>
+                    </button>
+                    <button onclick="handleAnswer('延展')" data-type="延展" class="option-btn btn-cartoon py-4 px-4 rounded-2xl bg-purple-100 hover:bg-purple-200 border-4 border-purple-400 text-purple-900 font-black text-xl sm:text-2xl flex items-center justify-center gap-2">
+                        <span>🔨</span><span>延展</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 即時回饋與科學解釋區（答題後顯示） -->
+            <div id="feedback-box" class="hidden rounded-3xl p-5 sm:p-6 border-4 shadow-md animate-bounce-in">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                    <div id="feedback-icon" class="text-5xl">🎉</div>
+                    <div class="flex-1 text-center sm:text-left">
+                        <h4 id="feedback-title" class="text-xl sm:text-2xl font-black mb-1">太棒了！答對囉！</h4>
+                        <p id="feedback-explanation" class="text-slate-700 text-sm sm:text-base leading-relaxed font-medium">
+                            糖均勻地分散在咖啡的水分子中，沒有產生新的物質，這就是「溶解」！
+                        </p>
+                    </div>
+                    <button onclick="nextQuestion()" id="btn-next" class="btn-cartoon w-full sm:w-auto px-6 py-3 rounded-2xl bg-slate-800 text-white font-black text-lg whitespace-nowrap">
+                        下一題 ➡️
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 結算畫面（成績單視圖） -->
+        <section id="view-result" class="hidden space-y-6 animate-bounce-in">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border-4 border-amber-300 shadow-xl text-center">
+                <div class="inline-block bg-amber-100 text-amber-800 font-bold px-4 py-1 rounded-full text-sm mb-2">
+                    🏆 闖關完成 🏆
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-black text-slate-800 mb-2" id="result-rank-title">超級科學小博士！</h2>
+                
+                <!-- 星級顯示 -->
+                <div class="flex justify-center gap-2 text-5xl sm:text-6xl my-4" id="result-stars">
+                    <span>⭐</span><span>⭐</span><span>⭐</span>
+                </div>
+
+                <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 max-w-md mx-auto mb-6">
+                    <div class="text-slate-500 text-sm font-bold">你的最終得分</div>
+                    <div class="text-4xl sm:text-5xl font-black text-amber-600 my-1" id="final-score">100 分</div>
+                    <div class="text-sm font-bold text-slate-600" id="result-stats">答對 10 / 10 題 ｜ 最高連擊 10 次</div>
+                </div>
+
+                <!-- 答題回顧列表 -->
+                <div class="text-left max-w-2xl mx-auto mb-8">
+                    <h3 class="font-black text-slate-700 text-lg mb-3 flex items-center gap-2">
+                        <span>📋</span> <span>本次挑戰答題回顧</span>
+                    </h3>
+                    <div id="review-list" class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                        <!-- 回顧項目由 JS 生成 -->
+                    </div>
+                </div>
+
+                <!-- 按鈕區 -->
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button onclick="switchView('learn')" class="btn-cartoon px-6 py-3.5 rounded-2xl bg-sky-100 text-sky-800 border-2 border-sky-300 font-black text-lg">
+                        📖 複習知識小百科
+                    </button>
+                    <button onclick="startGame()" class="btn-cartoon px-8 py-3.5 rounded-2xl bg-amber-400 text-amber-950 border-2 border-amber-500 font-black text-lg">
+                        🔄 再玩一次（抽取新題目）
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="text-center py-4 text-xs text-slate-500 font-medium">
+        國小自然科學互動學習遊戲 ｜ 探索日常生活中的物理變化
+    </footer>
+
+    <script>
+        // ==========================================
+        // 1. 音效合成器 (Web Audio API - 無需外部音檔)
+        // ==========================================
+        let audioCtx = null;
+        let isMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            const btn = document.getElementById('btn-mute');
+            btn.textContent = isMuted ? '🔇' : '🔊';
+            btn.classList.toggle('bg-rose-100', isMuted);
+            btn.classList.toggle('text-rose-600', isMuted);
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    // 清脆愉快的雙音階 (C5 -> E5 -> G5)
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'wrong') {
+                    // 低沉溫和的提示音
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.linearRampToValueAtTime(165, now + 0.25);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'win') {
+                    // 勝利小號旋律
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'triangle';
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(freq, now + idx * 0.12);
+                        g.gain.setValueAtTime(0.2, now + idx * 0.12);
+                        g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.3);
+                        o.start(now + idx * 0.12);
+                        o.stop(now + idx * 0.12 + 0.3);
+                    });
+                }
+            } catch (e) {
+                console.warn('Audio playback skipped:', e);
+            }
+        }
+
+        // ==========================================
+        // 2. 知識小百科資料 (包含工作紙原題與豐富生活例子)
+        // ==========================================
+        const CONCEPTS = [
+            {
+                id: '溶解',
+                title: '溶解 (Dissolving)',
+                emoji: '💧',
+                color: 'sky',
+                definition: '固體、液體或氣體均勻地分散在另一種液體（通常是水）裡面，變成透明或均勻的溶液。雖然肉眼看不見顆粒了，但原本的物質還在喔！',
+                worksheetExample: '在咖啡裏加入糖（糖粒化開，咖啡變甜）',
+                moreExamples: ['把食鹽放進湯裏攪拌', '用溫水泡蜂蜜水', '水彩顏料在水中化開']
+            },
+            {
+                id: '蒸發',
+                title: '蒸發 (Evaporation)',
+                emoji: '☀️',
+                color: 'orange',
+                definition: '液體表面受熱或風吹後，慢慢變成氣體（例如水變成水蒸氣）飛散到空氣中。水只是換了一種形態，並沒有變成別的物質！',
+                worksheetExample: '把濕透的衣服曬乾（衣服上的水分跑到空氣中）',
+                moreExamples: ['下雨後地上的水窪變乾', '用吹風機吹乾濕頭髮', '擦黑板後水漬很快消失']
+            },
+            {
+                id: '擠壓',
+                title: '擠壓 (Squeezing)',
+                emoji: '✊',
+                color: 'emerald',
+                definition: '用力按壓、捏或擠物體，讓它的體積縮小或形狀改變。物體只是被壓扁了，它的成分完全沒有改變！',
+                worksheetExample: '回收前擠壓塑膠瓶（塑膠瓶變扁，但還是塑膠）',
+                moreExamples: ['捏扁喝完的鋁罐', '用力捏黏土或麵團', '把洗碗海綿捏扁']
+            },
+            {
+                id: '延展',
+                title: '延展 (Malleability & Ductility)',
+                emoji: '🔨',
+                color: 'purple',
+                definition: '物體受到敲打、碾壓或拉扯時，能夠被拉長（延性）或打成薄片（展性）而不容易斷裂，常見於金屬或有彈性的物質。',
+                worksheetExample: '製作銀飾（把銀塊敲打、拉長做成戒指或項鍊）',
+                moreExamples: ['把金塊打造成薄薄的金箔', '師傅把拉麵麵條拉長', '把橡皮筋拉長']
+            }
+        ];
+
+        // ==========================================
+        // 3. 豐富生活題庫 (共 20 題：含工作紙 4 題 + 16 個生活情境)
+        // ==========================================
+        const QUESTION_BANK = [
+            // --- 溶解 (5題) ---
+            {
+                text: '在咖啡裏加入糖',
+                hint: '攪拌後糖粒看不見了，咖啡喝起來變甜了！',
+                emoji: '☕🍬',
+                answer: '溶解',
+                isWorksheet: true,
+                explanation: '糖均勻地分散在咖啡的水中，雖然看不見顆粒，但糖依然存在（所以咖啡變甜了），沒有產生新物質，這就是「溶解」！'
+            },
+            {
+                text: '把食鹽放進熱湯裏攪拌',
+                hint: '白色的鹽巴粒很快就消失在湯裡了。',
+                emoji: '🍲🧂',
+                answer: '溶解',
+                isWorksheet: false,
+                explanation: '食鹽顆粒在湯裡分散開來，和湯融為一體，鹽還是鹽、湯還是湯，屬於「溶解」現象！'
+            },
+            {
+                text: '用溫水沖泡一杯蜂蜜水',
+                hint: '濃稠的蜂蜜攪拌後均勻地混在水裡。',
+                emoji: '🍯🥤',
+                answer: '溶解',
+                isWorksheet: false,
+                explanation: '液態的蜂蜜均勻分散在水中，形成甜滋滋的蜂蜜水，沒有生成新物質，這也是「溶解」喔！'
+            },
+            {
+                text: '把方糖放進熱紅茶裏',
+                hint: '方塊狀的糖慢慢散開，最後整杯茶都變甜了。',
+                emoji: '🫖🧊',
+                answer: '溶解',
+                isWorksheet: false,
+                explanation: '方糖在熱紅茶中分解成微小的分子均勻散開，並沒有變成新物質，屬於「溶解」。'
+            },
+            {
+                text: '畫畫時把水彩顏料在水中化開',
+                hint: '清水變成了均勻的彩色顏料水。',
+                emoji: '🎨🖌️',
+                answer: '溶解',
+                isWorksheet: false,
+                explanation: '水彩顏料在水中均勻分散開來，讓水帶有顏色，這是典型的「溶解」變化！'
+            },
+
+            // --- 蒸發 (5題) ---
+            {
+                text: '把濕透的衣服曬乾',
+                hint: '太陽曬一曬、風吹一吹，衣服就變乾爽了！',
+                emoji: '👕☀️',
+                answer: '蒸發',
+                isWorksheet: true,
+                explanation: '衣服上的液態水吸收熱量後，變成看不見的水蒸氣跑到空氣中，水還是水，這叫做「蒸發」！'
+            },
+            {
+                text: '下雨後，地上的水窪慢慢變乾',
+                hint: '太陽出來沒多久，操場上的小水坑不見了。',
+                emoji: '🌧️🌤️',
+                answer: '蒸發',
+                isWorksheet: false,
+                explanation: '水窪裡的積水慢慢變成水蒸氣飛到空氣中，沒有產生新物質，這就是「蒸發」現象。'
+            },
+            {
+                text: '洗完澡用吹風機把濕頭髮吹乾',
+                hint: '熱風吹過頭髮，頭髮上的水珠很快就消失了。',
+                emoji: '💇‍♀️💨',
+                answer: '蒸發',
+                isWorksheet: false,
+                explanation: '吹風機的熱風加速了頭髮上水分的「蒸發」，讓液態水變成水蒸氣散發到空氣中。'
+            },
+            {
+                text: '用濕抹布擦黑板後，水漬很快消失',
+                hint: '黑板上濕濕的痕跡過一會兒就乾了。',
+                emoji: '🧽🏫',
+                answer: '蒸發',
+                isWorksheet: false,
+                explanation: '黑板表面的薄薄水層在室溫下很快「蒸發」成水蒸氣，黑板就變乾囉！'
+            },
+            {
+                text: '煮開水時，鍋子裡的水變少了',
+                hint: '水滾了冒出好多白煙，鍋裡的水位下降了。',
+                emoji: '🥘♨️',
+                answer: '蒸發',
+                isWorksheet: false,
+                explanation: '加熱讓水快速變成水蒸氣（汽化/蒸發）跑到空氣中，所以鍋裡的水變少了，但本質依然是水。'
+            },
+
+            // --- 擠壓 (5題) ---
+            {
+                text: '回收前擠壓塑膠瓶',
+                hint: '把空寶特瓶壓扁，可以節省回收桶的空間！',
+                emoji: '🧴✊',
+                answer: '擠壓',
+                isWorksheet: true,
+                explanation: '用力把塑膠瓶壓扁，只是改變了它的外型和體積，塑膠瓶依然還是塑膠，這屬於「擠壓」！'
+            },
+            {
+                text: '用手捏扁喝完的鋁罐',
+                hint: '用力一壓，圓柱形的汽水罐變扁了。',
+                emoji: '🥫💪',
+                answer: '擠壓',
+                isWorksheet: false,
+                explanation: '鋁罐受到外力壓迫而變形縮小，但材質依然是鋁，沒有產生新物質，這就是「擠壓」。'
+            },
+            {
+                text: '美勞課用力捏軟黏土或麵團',
+                hint: '把圓球狀的黏土壓成扁扁的餅乾形狀。',
+                emoji: '🥟👐',
+                answer: '擠壓',
+                isWorksheet: false,
+                explanation: '用手按壓黏土或麵團改變了它的形狀，但黏土還是黏土，屬於「擠壓」造成的物理變化。'
+            },
+            {
+                text: '刷牙時用力擠壓牙膏軟管',
+                hint: '軟管被壓扁，裡面的牙膏被推了出來。',
+                emoji: '🪥😁',
+                answer: '擠壓',
+                isWorksheet: false,
+                explanation: '透過外力「擠壓」軟管，改變了軟管的形狀並把牙膏擠出來，完全沒有生成新物質。'
+            },
+            {
+                text: '洗碗時把吸水海綿用力捏扁',
+                hint: '海綿被手握緊縮小，放開後又彈回來。',
+                emoji: '🧽💦',
+                answer: '擠壓',
+                isWorksheet: false,
+                explanation: '用力握緊海綿使它的空隙縮小變扁，這就是「擠壓」的動作，海綿本身並沒有改變。'
+            },
+
+            // --- 延展 (5題) ---
+            {
+                text: '工匠用小槌子敲打製作銀飾',
+                hint: '把銀塊敲打、拉長，變成漂亮的銀戒指或手環。',
+                emoji: '💍🔨',
+                answer: '延展',
+                isWorksheet: true,
+                explanation: '金屬具有很好的「延展性」，經過敲打或拉扯可以變成薄片或細絲來製作飾品，但銀依然是銀！'
+            },
+            {
+                text: '把黃金塊打造成薄薄的金箔',
+                hint: '純金可以被敲打成比紙還要薄的金色薄片。',
+                emoji: '🥇✨',
+                answer: '延展',
+                isWorksheet: false,
+                explanation: '黃金的「延展性」極佳！被敲打成極薄的金箔後，它依然是黃金，沒有變成新物質。'
+            },
+            {
+                text: '拉麵師傅把麵團拉成細長的麵條',
+                hint: '雙手一拉一甩，粗麵團變成了又細又長的麵條。',
+                emoji: '🍜👨‍🍳',
+                answer: '延展',
+                isWorksheet: false,
+                explanation: '麵團受到拉力被拉長變細而沒有斷掉，這是利用了麵團的「延展」特性！'
+            },
+            {
+                text: '雙手把橡皮筋用力拉長',
+                hint: '原本小小的圓圈被拉得長長的。',
+                emoji: '➰🙌',
+                answer: '延展',
+                isWorksheet: false,
+                explanation: '橡皮筋受拉力伸長，形狀改變了但橡膠材質沒變，這也屬於「延展」的表現喔！'
+            },
+            {
+                text: '鐵匠將燒紅的鐵塊鍛打成扁平鐵片',
+                hint: '用鐵鎚反覆敲打，厚鐵塊慢慢延展開來變成鐵片。',
+                emoji: '⚔️🔥',
+                answer: '延展',
+                isWorksheet: false,
+                explanation: '鐵塊在敲打下向四周延展變薄，成為鐵片或工具，本質依然是鐵，這就是金屬的「延展性」。'
+            }
+        ];
+
+        // ==========================================
+        // 4. 遊戲狀態管理
+        // ==========================================
+        let gameState = {
+            questions: [],
+            currentIndex: 0,
+            score: 0,
+            combo: 0,
+            maxCombo: 0,
+            correctCount: 0,
+            history: [],
+            isAnswered: false
+        };
+
+        // 初始化知識小百科卡片
+        function renderEncyclopedia() {
+            const container = document.getElementById('encyclopedia-cards');
+            const colorMap = {
+                sky: 'bg-sky-50 border-sky-300 text-sky-900 badge-sky',
+                orange: 'bg-orange-50 border-orange-300 text-orange-900 badge-orange',
+                emerald: 'bg-emerald-50 border-emerald-300 text-emerald-900 badge-emerald',
+                purple: 'bg-purple-50 border-purple-300 text-purple-900 badge-purple'
+            };
+
+            const tagColorMap = {
+                sky: 'bg-sky-200 text-sky-900',
+                orange: 'bg-orange-200 text-orange-900',
+                emerald: 'bg-emerald-200 text-emerald-900',
+                purple: 'bg-purple-200 text-purple-900'
+            };
+
+            container.innerHTML = CONCEPTS.map(c => `
+                <div class="rounded-3xl p-6 border-4 shadow-md flex flex-col justify-between ${colorMap[c.color]}">
+                    <div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-4xl bg-white p-2.5 rounded-2xl shadow-sm">${c.emoji}</span>
+                            <h3 class="text-2xl font-black">${c.title}</h3>
+                        </div>
+                        <p class="text-slate-700 text-sm sm:text-base leading-relaxed mb-4 font-medium">
+                            ${c.definition}
+                        </p>
+                    </div>
+                    <div class="bg-white/80 rounded-2xl p-4 space-y-2 border border-white">
+                        <div class="text-xs font-black uppercase tracking-wider text-amber-600 flex items-center gap-1">
+                            <span>📝</span> <span>工作紙經典例子：</span>
+                        </div>
+                        <p class="font-bold text-slate-800 text-sm sm:text-base">${c.worksheetExample}</p>
+                        
+                        <div class="pt-2 border-t border-slate-200/70">
+                            <div class="text-xs font-bold text-slate-500 mb-1.5">🌟 更多生活例子：</div>
+                            <div class="flex flex-wrap gap-1.5">
+                                ${c.moreExamples.map(ex => `
+                                    <span class="text-xs font-bold px-2.5 py-1 rounded-lg ${tagColorMap[c.color]}">
+                                        ${ex}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 切換視圖
+        function switchView(viewName) {
+            playSound('click');
+            ['home', 'learn', 'game', 'result'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+            });
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 洗牌演算法 (Fisher-Yates)
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // 開始新遊戲（確保包含至少 2 題工作紙原題 + 8 題生活題，共 10 題）
+        function startGame() {
+            initAudio();
+            playSound('click');
+
+            const worksheetQs = shuffleArray(QUESTION_BANK.filter(q => q.isWorksheet));
+            const normalQs = shuffleArray(QUESTION_BANK.filter(q => !q.isWorksheet));
+
+            // 抽取 2 題原題 + 8 題生活延伸題，並再次打亂順序
+            const selected = shuffleArray([
+                ...worksheetQs.slice(0, 2),
+                ...normalQs.slice(0, 8)
+            ]);
+
+            gameState = {
+                questions: selected,
+                currentIndex: 0,
+                score: 0,
+                combo: 0,
+                maxCombo: 0,
+                correctCount: 0,
+                history: [],
+                isAnswered: false
+            };
+
+            updateScoreUI();
+            switchView('game');
+            renderCurrentQuestion();
+        }
+
+        // 渲染當前題目
+        function renderCurrentQuestion() {
+            const q = gameState.questions[gameState.currentIndex];
+            const total = gameState.questions.length;
+            gameState.isAnswered = false;
+
+            // 更新進度條
+            document.getElementById('question-counter').textContent = `第 ${gameState.currentIndex + 1} / ${total} 題`;
+            document.getElementById('progress-bar').style.width = `${((gameState.currentIndex + 1) / total) * 100}%`;
+
+            // 顯示是否為工作紙原題
+            const wsBadge = document.getElementById('worksheet-badge');
+            if (q.isWorksheet) {
+                wsBadge.classList.remove('hidden');
+            } else {
+                wsBadge.classList.add('hidden');
+            }
+
+            // 更新題目文字與插畫
+            const card = document.getElementById('question-card');
+            card.classList.remove('animate-bounce-in', 'animate-shake');
+            void card.offsetWidth; // 觸發重繪
+            card.classList.add('animate-bounce-in');
+
+            document.getElementById('question-visual').textContent = q.emoji;
+            document.getElementById('question-text').textContent = q.text;
+            document.getElementById('question-hint').textContent = `（${q.hint}）`;
+
+            // 重置選項按鈕狀態
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('opacity-40', 'ring-4', 'ring-emerald-500', 'ring-rose-500', 'scale-105');
+            });
+
+            // 隱藏回饋區
+            document.getElementById('feedback-box').classList.add('hidden');
+        }
+
+        // 處理玩家作答
+        function handleAnswer(selectedType) {
+            if (gameState.isAnswered) return;
+            gameState.isAnswered = true;
+
+            const q = gameState.questions[gameState.currentIndex];
+            const isCorrect = selectedType === q.answer;
+            const buttons = document.querySelectorAll('.option-btn');
+
+            // 鎖定按鈕並標示正確與錯誤選項
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                const btnType = btn.getAttribute('data-type');
+                if (btnType === q.answer) {
+                    btn.classList.add('ring-4', 'ring-emerald-500', 'scale-105');
+                } else if (btnType === selectedType && !isCorrect) {
+                    btn.classList.add('ring-4', 'ring-rose-500', 'opacity-70');
+                } else {
+                    btn.classList.add('opacity-40');
+                }
+            });
+
+            const feedbackBox = document.getElementById('feedback-box');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackExplanation = document.getElementById('feedback-explanation');
+            const nextBtn = document.getElementById('btn-next');
+
+            feedbackBox.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-400', 'bg-rose-50', 'border-rose-400');
+
+            if (isCorrect) {
+                playSound('correct');
+                gameState.combo++;
+                if (gameState.combo > gameState.maxCombo) {
+                    gameState.maxCombo = gameState.combo;
+                }
+                gameState.correctCount++;
+                // 基礎 10 分 + 連擊額外加分
+                const bonus = gameState.combo >= 2 ? (gameState.combo - 1) * 2 : 0;
+                gameState.score += (10 + bonus);
+
+                const praises = ['太棒了！答對囉！', '好厲害！完全正確！', '小偵探真聰明！', '賓果！觀察得好仔細！'];
+                const randomPraise = praises[Math.floor(Math.random() * praises.length)];
+
+                feedbackBox.classList.add('bg-emerald-50', 'border-emerald-400');
+                feedbackIcon.textContent = gameState.combo >= 3 ? '🔥' : '🎉';
+                feedbackTitle.textContent = bonus > 0 ? `${randomPraise} (+${10 + bonus}分)` : `${randomPraise} (+10分)`;
+                feedbackTitle.className = 'text-xl sm:text-2xl font-black mb-1 text-emerald-700';
+            } else {
+                playSound('wrong');
+                gameState.combo = 0;
+
+                const card = document.getElementById('question-card');
+                card.classList.add('animate-shake');
+
+                feedbackBox.classList.add('bg-rose-50', 'border-rose-400');
+                feedbackIcon.textContent = '💡';
+                feedbackTitle.textContent = `差一點點！正確答案是「${q.answer}」喔！`;
+                feedbackTitle.className = 'text-xl sm:text-2xl font-black mb-1 text-rose-700';
+            }
+
+            feedbackExplanation.textContent = q.explanation;
+
+            // 如果是最後一題，修改按鈕文字
+            if (gameState.currentIndex === gameState.questions.length - 1) {
+                nextBtn.textContent = '查看成績單 🏆';
+            } else {
+                nextBtn.textContent = '下一題 ➡️';
+            }
+
+            // 記錄答題歷史
+            gameState.history.push({
+                text: q.text,
+                emoji: q.emoji,
+                userAnswer: selectedType,
+                correctAnswer: q.answer,
+                isCorrect: isCorrect
+            });
+
+            updateScoreUI();
+        }
+
+        // 更新分數與連擊顯示
+        function updateScoreUI() {
+            document.getElementById('score-display').textContent = gameState.score;
+            const comboBadge = document.getElementById('combo-badge');
+            if (gameState.combo >= 2) {
+                comboBadge.classList.remove('hidden');
+                document.getElementById('combo-count').textContent = gameState.combo;
+            } else {
+                comboBadge.classList.add('hidden');
+            }
+        }
+
+        // 進入下一題或結算
+        function nextQuestion() {
+            playSound('click');
+            if (gameState.currentIndex < gameState.questions.length - 1) {
+                gameState.currentIndex++;
+                renderCurrentQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // 顯示結算畫面
+        function showResults() {
+            playSound('win');
+            switchView('result');
+
+            const total = gameState.questions.length;
+            const correct = gameState.correctCount;
+            const starsContainer = document.getElementById('result-stars');
+            const rankTitle = document.getElementById('result-rank-title');
+
+            let starCount = 1;
+            if (correct >= 9) {
+                starCount = 3;
+                rankTitle.textContent = '🏆 無敵科學小博士！';
+            } else if (correct >= 6) {
+                starCount = 2;
+                rankTitle.textContent = '🌟 優秀物質小偵探！';
+            } else {
+                starCount = 1;
+                rankTitle.textContent = '💪 潛力科學見習生！';
+            }
+
+            starsContainer.innerHTML = [1, 2, 3].map(i => 
+                i <= starCount 
+                    ? '<span class="animate-bounce" style="animation-delay:' + (i * 0.15) + 's">⭐</span>' 
+                    : '<span class="opacity-25 grayscale">⭐</span>'
+            ).join('');
+
+            document.getElementById('final-score').textContent = `${gameState.score} 分`;
+            document.getElementById('result-stats').textContent = `答對 ${correct} / ${total} 題 ｜ 最高連擊 ${gameState.maxCombo} 次`;
+
+            // 生成答題回顧
+            const reviewList = document.getElementById('review-list');
+            reviewList.innerHTML = gameState.history.map((item, idx) => `
+                <div class="flex items-center justify-between p-3 rounded-2xl border-2 ${item.isCorrect ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50/70 border-rose-200'}">
+                    <div class="flex items-center gap-3">
+                        <span class="font-black text-slate-400 text-sm w-5">${idx + 1}.</span>
+                        <span class="text-2xl">${item.emoji}</span>
+                        <div>
+                            <div class="font-bold text-slate-800 text-sm sm:text-base">${item.text}</div>
+                            ${!item.isCorrect ? `<div class="text-xs text-rose-600 font-bold">你的答案：${item.userAnswer}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1 rounded-xl font-black text-xs sm:text-sm ${item.isCorrect ? 'bg-emerald-200 text-emerald-900' : 'bg-amber-200 text-amber-900'}">
+                            ${item.correctAnswer}
+                        </span>
+                        <span class="text-lg">${item.isCorrect ? '✅' : '❌'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 頁面載入完成後初始化
+        window.onload = function() {
+            renderEncyclopedia();
+        };
+    </script>
+</body>
+</html>
